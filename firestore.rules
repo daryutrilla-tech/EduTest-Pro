@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'Admin' ||
+         request.auth.token.email == 'daryutrilla@gmail.com');
+    }
+
+    // Examenes: Anyone can read, only Admin can write
+    match /examenes/{examenId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Usuarios: Anyone can read/create (for CURP login), only Admin can update others
+    match /usuarios/{userId} {
+      allow read: if true; 
+      allow create: if isAuthenticated() && 
+        request.resource.data.estado == 'pendiente' &&
+        request.resource.data.rol == 'Alumno'; 
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        (
+          (request.auth.uid == resource.data.authUid || ('email' in resource.data && request.auth.token.email == resource.data.email)) && 
+          request.resource.data.estado == resource.data.estado &&
+          request.resource.data.rol == resource.data.rol &&
+          request.resource.data.examenesHabilitados == resource.data.examenesHabilitados
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Resultados: Users can read their own results via authUid, Admin can read all
+    match /resultados/{resultadoId} {
+      allow read: if isAuthenticated() && (resource.data.authUid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.authUid == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Configuracion: Anyone can read, only Admin can write
+    match /configuracion/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "Examen": {
+      "title": "Examen",
+      "description": "Definición de un examen o evaluación.",
+      "type": "object",
+      "properties": {
+        "titulo": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "tiempoLimite": { "type": "integer", "description": "Tiempo en minutos" },
+        "calificacionMinima": { "type": "integer" },
+        "preguntas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pregunta": { "type": "string" },
+              "opciones": { "type": "array", "items": { "type": "string" } },
+              "respuestaCorrecta": { "type": "integer", "description": "Índice de la opción correcta (0-3)" }
+            },
+            "required": ["pregunta", "opciones", "respuestaCorrecta"]
+          }
+        }
+      },
+      "required": ["titulo", "tiempoLimite", "calificacionMinima", "preguntas"]
+    },
+    "Usuario": {
+      "title": "Usuario",
+      "description": "Perfil del alumno o administrador.",
+      "type": "object",
+      "properties": {
+        "nombreCompleto": { "type": "string" },
+        "curp": { "type": "string" },
+        "empresa": { "type": "string" },
+        "rfcEmpresa": { "type": "string" },
+        "nombrePatron": { "type": "string" },
+        "nombreRepresentanteTrabajadores": { "type": "string" },
+        "rol": { "type": "string", "enum": ["Admin", "Alumno"] },
+        "estado": { "type": "string", "enum": ["pendiente", "activo", "bloqueado"] },
+        "examenesHabilitados": { "type": "array", "items": { "type": "string" } },
+        "email": { "type": "string" },
+        "uid": { "type": "string" },
+        "authUid": { "type": "string" }
+      },
+      "required": ["nombreCompleto", "curp", "rol", "estado"]
+    },
+    "Resultado": {
+      "title": "Resultado",
+      "description": "Resultado de un examen realizado por un alumno.",
+      "type": "object",
+      "properties": {
+        "usuarioId": { "type": "string" },
+        "authUid": { "type": "string" },
+        "examenId": { "type": "string" },
+        "examenTitulo": { "type": "string" },
+        "puntaje": { "type": "number" },
+        "fecha": { "type": "string", "format": "date-time" },
+        "fecha_finalizacion": { "type": "string", "description": "Firestore serverTimestamp" },
+        "aprobado": { "type": "boolean" },
+        "respuestasUsuario": { "type": "array", "items": { "type": "integer" } }
+      },
+      "required": ["usuarioId", "examenId", "puntaje", "fecha", "aprobado"]
+    },
+    "Configuracion": {
+      "title": "Configuración",
+      "description": "Configuración global de la plataforma.",
+      "type": "object",
+      "properties": {
+        "logoUrl": { "type": "string" },
+        "nombrePlataforma": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/examenes/{examenId}": {
+      "schema": "Examen",
+      "description": "Colección de exámenes disponibles."
+    },
+    "/usuarios/{usuarioId}": {
+      "schema": "Usuario",
+      "description": "Datos de perfil de los usuarios."
+    },
+    "/resultados/{resultadoId}": {
+      "schema": "Resultado",
+      "description": "Historial de resultados de exámenes."
+    },
+    "/configuracion/{configId}": {
+      "schema": "Configuracion",
+      "description": "Configuración global de la plataforma."
+    }
+  }
+}
